@@ -21,7 +21,9 @@ This report summarises the key findings from the SQL, statistical, probability, 
 
 ## Task 1.3 – Temperature Around Holidays
 
-*(to be added)*
+**Data note** : New Year's Day has no recorded data for 2015 in this dataset — a genuine gap, not a processing error. 
+**Observation 1:** Comparing 2016 to 2017, average temperature rose from -6.12°C to -3.06°C. 
+**Observation 2:** Labor Day temperatures declined steadily each year: 22.17°C (2015) → 21.6°C (2016) → 17.48°C (2017). Notably, temperature alone doesn't cleanly predict Labor Day traffic volume — the coldest year (2017) had the highest average traffic, suggesting other factors dominate holiday travel behavior.
 
 ---
 
