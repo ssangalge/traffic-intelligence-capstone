@@ -51,10 +51,22 @@ This report summarises the key findings from the SQL, statistical, probability, 
 
 ## Task 4 – Power BI Dashboard Findings
 
-*(to be added)*
+**A. Daily traffic trends (2015-2017):** Line chart split by year shows [describe the pattern you observed — e.g. visible weekly cyclicality with dips on certain days, and note whether one year's line sits consistently above/below the others].
+
+- **B. Hourly traffic patterns (2017):** Column chart confirms the expected two-peak commuter pattern — higher average traffic during morning and evening rush hours, with clear overnight lows.
+
+- **C. Weather impact:** Clouds shows the highest average traffic volume (3,618.4 vehicles/hour, n=15,164 — a large, reliable sample). Squall shows the lowest (2,061.8 vehicles/hour), but this is based on only 4 recorded instances and should be treated cautiously rather than as a robust finding. The difference between highest and lowest is 1,556.6 vehicles/hour. Excluding the low-sample Squall category, Fog (2,703.7 vehicles/hour, n=912) is a more statistically meaningful "lowest" comparison point.
+
+- **D. Temperature vs. traffic scatter plot:** Points form a wide, scattered cloud across a temperature range of roughly -28°C to +36°C, with no clean visible trend line — consistent with the weak correlation (r=0.14) found in Task 2. Higher-traffic points are broadly spread across the moderate-to-warm temperature range rather than concentrated in a narrow band, reinforcing that temperature alone is a poor predictor of traffic volume in this corridor.
+
+**4.3 KPI Cards and Filters**
+
+Three KPI cards were added: Total Hours Analysed (48,204), Average Traffic Volume (3,260 vehicles/hour), and Average Temperature (8.06°C) — the temperature figure aligns well with Minneapolis-St Paul's known climate averages, giving confidence in the data pipeline. Three interactive slicers were added: an Hour range slider (0-23), a Weather condition checklist, and a Traffic Category checklist (Low/Medium/High), allowing stakeholders to filter the whole dashboard down to specific conditions of interest (e.g. isolating rush-hour periods, or comparing clear vs. stormy weather).
+
 
 ---
 
 ## Summary of Key Implications
 
-*(to be added once all tasks are complete — 2-3 sentence executive summary for stakeholders)*
+This analysis suggests traffic volume on this I-94 corridor is driven far more by **time-based patterns** (hour of day, day of week, and year-over-year demand shifts) than by weather or temperature, which showed only weak statistical relationships (r=0.14 correlation; near-independence between congestion and clear weather). The clearest actionable pattern is the two-peak commuter rush-hour structure, which should anchor any capacity planning or congestion-mitigation strategy. The 2016-2017 demand rebound (+5.73%) and the corridor's non-linear year-over-year trend suggest the mobility team should build monitoring for sudden demand shifts rather than assuming smooth, predictable growth. Data quality findings — duplicate timestamps representing simultaneous weather conditions, and inconsistent holiday flagging — are important caveats for any downstream Part 2/Part 3 modelling work, and should be explicitly handled (not silently dropped) to avoid biasing future predictive models.
+
