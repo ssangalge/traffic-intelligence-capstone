@@ -41,7 +41,11 @@ This report summarises the key findings from the SQL, statistical, probability, 
 
 ## Task 3 – Probability and Congestion Analysis
 
-*(to be added)*
+**Data note:** this analysis uses the full raw dataset (not de-duplicated), since duplicate timestamps here represent legitimate simultaneous weather conditions (e.g. "Rain" and "Mist" reported for the same hour with identical traffic volume), not data errors.
+
+**Observation 1:** Congestion occurs in 14.73% of hours. Congestion and clear weather appear approximately independent (P(Congestion AND Clear) = 0.0366 vs. an expected 0.0409 under independence, a difference of only 0.0043) — congestion is more strongly tied to time-of-day/rush hour patterns than to weather conditions.
+
+**Observation 2:** The odds ratio of congestion in clear vs. cloudy weather is 0.7354 — meaning the odds of congestion are actually about 26% lower in clear weather than cloudy weather, a mildly counterintuitive result. Combined with the near-independence finding, weather condition alone is a weak lever for predicting congestion in this corridor; timing-based factors likely dominate.
 
 ---
 
