@@ -31,7 +31,11 @@ This report summarises the key findings from the SQL, statistical, probability, 
 
 ## Task 2 – Descriptive Statistics and Correlation
 
-*(to be added)*
+**Observation 1:** Mean traffic volume is 3,290.65 vehicles/hour, while the median is higher at 3,427.0 — this gap indicates a left-skewed distribution, likely driven by a long tail of low-traffic overnight hours pulling the mean below the median.
+
+**Observation 2:** Standard deviation (1,984.77) is large relative to the mean, confirming substantial hour-to-hour variability — unsurprising given the mix of rush-hour peaks and overnight lows in a single "hourly volume" metric.
+
+**Correlation:** The Pearson correlation between temperature and traffic volume is r = 0.1369 — positive in direction but weak in strength. This means temperature alone is a poor predictor of traffic volume. Even if this correlation were stronger, it would not establish causation: both temperature and traffic patterns could independently be driven by a third factor such as season (which affects both typical weather and typical commuting/holiday behavior).
 
 ---
 
