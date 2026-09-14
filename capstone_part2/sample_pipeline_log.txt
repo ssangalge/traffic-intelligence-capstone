@@ -1,0 +1,37 @@
+2026-09-14 20:32:34 | INFO     | __main__ | === Starting data pipeline ===
+2026-09-14 20:32:34 | INFO     | __main__ | Loading raw data from /home/claude/data/Metro_Interstate_Traffic_Volume.csv
+2026-09-14 20:32:34 | INFO     | __main__ | Loaded 48,204 rows and 9 columns.
+2026-09-14 20:32:34 | INFO     | __main__ | Schema validation passed: all expected columns present.
+2026-09-14 20:32:34 | DEBUG    | __main__ | Fixing data types for rain_1h, snow_1h, and date_time.
+2026-09-14 20:32:34 | INFO     | __main__ | Data types enforced: rain_1h and snow_1h as float, date_time as datetime.
+2026-09-14 20:32:34 | INFO     | __main__ | No true null values found in any column.
+2026-09-14 20:32:34 | INFO     | __main__ | 'holiday' column: 48,143 rows use the string 'None' (not a true null) to represent non-holiday hours.
+2026-09-14 20:32:34 | WARNING  | __main__ | Found 52 rows with traffic_volume < 20 (physically implausible for an interstate highway). Flagged via 'is_implausible_volume' column rather than dropped, to preserve context.
+2026-09-14 20:32:34 | INFO     | __main__ | Dates with implausible readings: [datetime.date(2015, 7, 25), datetime.date(2016, 7, 9), datetime.date(2016, 7, 22), datetime.date(2016, 7, 23), datetime.date(2016, 7, 24), datetime.date(2016, 8, 31), datetime.date(2016, 9, 1), datetime.date(2016, 9, 7), datetime.date(2016, 9, 8)]
+2026-09-14 20:32:34 | INFO     | __main__ | Found 5,445 timestamps with multiple rows (multiple simultaneous weather conditions reported for the same hour). These are preserved, not dropped, per the Part 1 analysis.
+2026-09-14 20:32:35 | INFO     | __main__ | Cleaned data written to /home/claude/capstone_part2/cleaned_traffic_data.csv (48,204 rows).
+2026-09-14 20:32:35 | INFO     | __main__ | === Pipeline completed successfully ===
+2026-09-14 20:32:36 | INFO     | __main__ | === Starting feature engineering ===
+2026-09-14 20:32:36 | INFO     | __main__ | Loading cleaned data from /home/claude/capstone_part2/cleaned_traffic_data.csv
+2026-09-14 20:32:36 | INFO     | __main__ | Loaded 48,204 rows for feature engineering.
+2026-09-14 20:32:36 | DEBUG    | __main__ | Adding time-based features.
+2026-09-14 20:32:36 | INFO     | __main__ | Added time features: hour, day_of_week, month, is_weekend.
+2026-09-14 20:32:36 | DEBUG    | __main__ | Adding weather-based features.
+2026-09-14 20:32:36 | INFO     | __main__ | Added weather features: temp_celsius, is_clear, is_precipitating.
+2026-09-14 20:32:36 | DEBUG    | __main__ | Scaling numeric columns: temp_celsius, traffic_volume.
+2026-09-14 20:32:36 | INFO     | __main__ | Added scaled numeric features: temp_celsius_scaled, traffic_volume_scaled.
+2026-09-14 20:32:36 | DEBUG    | __main__ | Building congestion target variable(s).
+2026-09-14 20:32:36 | INFO     | __main__ | Added target variables: is_congested (14.73% of rows), traffic_category (Low/Medium/High).
+2026-09-14 20:32:36 | INFO     | __main__ | Featured data written to /home/claude/capstone_part2/featured_traffic_data.csv (48,204 rows, 21 columns).
+2026-09-14 20:32:36 | INFO     | __main__ | === Feature engineering completed successfully ===
+2026-09-14 20:32:37 | INFO     | __main__ | === Starting visualization generation ===
+2026-09-14 20:32:37 | INFO     | __main__ | Loading featured data from /home/claude/capstone_part2/featured_traffic_data.csv
+2026-09-14 20:32:37 | INFO     | __main__ | Loaded 48,204 rows for visualization.
+2026-09-14 20:32:37 | DEBUG    | __main__ | Building hourly traffic pattern chart.
+2026-09-14 20:32:37 | INFO     | __main__ | Saved hourly traffic pattern chart to /home/claude/capstone_part2/figures/hourly_traffic_pattern.png
+2026-09-14 20:32:37 | DEBUG    | __main__ | Building traffic volume distribution chart.
+2026-09-14 20:32:37 | INFO     | __main__ | Saved traffic volume distribution chart to /home/claude/capstone_part2/figures/traffic_volume_distribution.png
+2026-09-14 20:32:37 | DEBUG    | __main__ | Building congestion rate by weather condition chart.
+2026-09-14 20:32:37 | INFO     | __main__ | Saved congestion-by-weather chart to /home/claude/capstone_part2/figures/congestion_by_weather.png
+2026-09-14 20:32:37 | INFO     | __main__ | All figures saved to /home/claude/capstone_part2/figures
+2026-09-14 20:32:37 | INFO     | __main__ | === Visualization generation completed successfully ===
