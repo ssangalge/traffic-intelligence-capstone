@@ -50,6 +50,13 @@ def configure_logging(log_file: str = "pipeline.log", level=logging.DEBUG) -> lo
     file_handler.setFormatter(formatter)
     root_logger.addHandler(file_handler)
 
+    # Third-party libraries (e.g. matplotlib) emit very verbose DEBUG logs
+    # (font-matching internals, etc.) that add noise without adding value.
+    # Raise their threshold so only WARNING+ from them appears, while our
+    # own application code still logs at DEBUG level.
+    logging.getLogger("matplotlib").setLevel(logging.WARNING)
+    logging.getLogger("PIL").setLevel(logging.WARNING)
+
     return root_logger
 
 
