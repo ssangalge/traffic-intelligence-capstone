@@ -160,6 +160,7 @@ capstone-env/
 data/*.csv
 capstone_part2/cleaned_traffic_data.csv
 capstone_part2/*.log
+capstone_part2/cleaned_traffic_data.csv, capstone_part2/featured_traffic_data.csv, capstone_part2/*.log, part1_sql/traffic.db
 
 # Spyder project settings
 .spyderproject
