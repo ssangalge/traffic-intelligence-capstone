@@ -157,6 +157,9 @@ ENV/
 env.bak/
 venv.bak/
 capstone-env/
+data/*.csv
+capstone_part2/cleaned_traffic_data.csv
+capstone_part2/*.log
 
 # Spyder project settings
 .spyderproject
