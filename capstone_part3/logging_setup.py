@@ -56,6 +56,8 @@ def configure_logging(log_file: str = "pipeline.log", level=logging.DEBUG) -> lo
     # own application code still logs at DEBUG level.
     logging.getLogger("matplotlib").setLevel(logging.WARNING)
     logging.getLogger("PIL").setLevel(logging.WARNING)
+    logging.getLogger("shap").setLevel(logging.WARNING)
+    logging.getLogger("tensorflow").setLevel(logging.WARNING)
 
     return root_logger
 
