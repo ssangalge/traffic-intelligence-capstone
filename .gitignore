@@ -162,6 +162,9 @@ capstone_part2/cleaned_traffic_data.csv
 capstone_part2/*.log
 capstone_part2/cleaned_traffic_data.csv, capstone_part2/featured_traffic_data.csv, capstone_part2/*.log, part1_sql/traffic.db
 capstone_part3/mlruns/
+capstone_part3/model_artifact.joblib
+capstone_part3/mlflow.db
+capstone_part3/uvicorn.log
 # Spyder project settings
 .spyderproject
 .spyproject
