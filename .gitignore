@@ -160,7 +160,6 @@ capstone-env/
 data/*.csv
 capstone_part2/cleaned_traffic_data.csv
 capstone_part2/*.log
-capstone_part2/cleaned_traffic_data.csv, capstone_part2/featured_traffic_data.csv, capstone_part2/*.log, part1_sql/traffic.db
 capstone_part3/mlruns/
 capstone_part3/model_artifact.joblib
 capstone_part3/mlflow.db
@@ -224,3 +223,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+capstone_part2/featured_traffic_data.csv
+part1_sql/traffic.db
+capstone_part3/risk_labeled_data.csv
