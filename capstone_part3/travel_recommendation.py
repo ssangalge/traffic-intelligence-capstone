@@ -43,6 +43,36 @@ def load_data(csv_path: Path) -> pd.DataFrame:
     return df
 
 
+def generate_plain_language_recommendation(
+    day_of_week: str, best_hours: pd.DataFrame, weather_filter: str = None
+) -> str:
+    """Generate a human-readable recommendation sentence, e.g.:
+    'For a weekday journey, consider travelling between 10:00 and 11:00 AM,
+    when historical traffic volumes are typically lower.'
+    """
+    if best_hours.empty:
+        return "No historical data available to generate a recommendation."
+
+    top_hour = int(best_hours.iloc[0]["hour"])
+    end_hour = (top_hour + 1) % 24
+
+    def format_hour(h: int) -> str:
+        period = "AM" if h < 12 else "PM"
+        display_hour = h % 12
+        if display_hour == 0:
+            display_hour = 12
+        return f"{display_hour}:00 {period}"
+
+    day_type = "weekend" if day_of_week in ("Saturday", "Sunday") else "weekday"
+    weather_clause = f" under {weather_filter.lower()} conditions" if weather_filter else ""
+
+    return (
+        f"For a {day_type} journey on {day_of_week}{weather_clause}, consider travelling "
+        f"between {format_hour(top_hour)} and {format_hour(end_hour)}, when historical "
+        f"traffic volumes and risk levels are typically lower."
+    )
+
+
 def recommend_travel_times(
     df: pd.DataFrame, day_of_week: str, weather_filter: str = None, top_n: int = 5
 ) -> pd.DataFrame:
@@ -170,6 +200,9 @@ def run_interactive_cli(input_csv_path: Path = INPUT_CSV_PATH) -> None:
         for _, row in best.iterrows():
             print(f"  {int(row['hour']):02d}:00 -- avg volume: {row['avg_traffic_volume']:.0f}, "
                   f"high-risk rate: {row['high_risk_rate']:.1%}")
+
+        recommendation = generate_plain_language_recommendation(day_input, best, weather_filter)
+        print(f"\nRecommendation: {recommendation}")
 
         print(f"\nTimes to AVOID on {day_input}:")
         for _, row in worst.iterrows():

@@ -41,10 +41,12 @@ INPUT_CSV_PATH = Path(__file__).parent / "risk_labeled_data.csv"
 FIGURES_DIR = Path(__file__).parent / "figures"
 RANDOM_STATE = 42
 
-TIME_FEATURES = ["hour", "month"]
+TIME_FEATURES = ["hour", "month", "hour_sin", "hour_cos"]
 NUMERIC_WEATHER_FEATURES = ["temp_celsius", "clouds_all", "rain_1h", "snow_1h"]
 CATEGORICAL_FEATURES = ["day_of_week", "weather_main"]
 BOOLEAN_FEATURES = ["is_weekend", "is_clear", "is_precipitating"]
+
+DAY_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 def load_data(csv_path: Path) -> pd.DataFrame:
@@ -59,13 +61,19 @@ def load_data(csv_path: Path) -> pd.DataFrame:
 
 
 def build_feature_matrix(df: pd.DataFrame) -> pd.DataFrame:
-    logger.debug("Building feature matrix (time + raw weather features only).")
+    logger.debug("Building feature matrix (time + weather + holiday features).")
 
     feature_cols = TIME_FEATURES + NUMERIC_WEATHER_FEATURES + BOOLEAN_FEATURES
     X = df[feature_cols].copy()
 
     for col in BOOLEAN_FEATURES:
         X[col] = X[col].astype(int)
+
+    X["is_holiday"] = (df["holiday"] != "None").astype(int)
+
+    dow_numeric = df["day_of_week"].map({day: i for i, day in enumerate(DAY_ORDER)})
+    X["dow_sin"] = np.sin(2 * np.pi * dow_numeric / 7)
+    X["dow_cos"] = np.cos(2 * np.pi * dow_numeric / 7)
 
     X = pd.get_dummies(X.join(df[CATEGORICAL_FEATURES]), columns=CATEGORICAL_FEATURES, drop_first=True)
 

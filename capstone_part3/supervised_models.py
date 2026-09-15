@@ -24,6 +24,7 @@ import logging
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -36,6 +37,7 @@ from sklearn.metrics import (
     precision_score,
     r2_score,
     recall_score,
+    roc_auc_score,
 )
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -47,12 +49,18 @@ logger = logging.getLogger(__name__)
 INPUT_CSV_PATH = Path(__file__).parent / "risk_labeled_data.csv"
 RANDOM_STATE = 42
 
-# Features used for BOTH tasks -- deliberately excludes any column derived
-# from or used to construct proxy_risk_label / traffic_volume itself.
-TIME_FEATURES = ["hour", "month"]
+# Common, well-engineered feature set used for BOTH classification and
+# regression tasks, per the assignment spec: time-based features, weather
+# encodings, a holiday flag, and cyclical encodings of hour and day of week.
+# Deliberately excludes congestion_quartile / proxy_risk_score /
+# is_severe_weather / traffic_volume as features when predicting
+# proxy_risk_label, since those are used to construct that label itself.
+TIME_FEATURES = ["hour", "month", "hour_sin", "hour_cos"]
 NUMERIC_WEATHER_FEATURES = ["temp_celsius", "clouds_all", "rain_1h", "snow_1h"]
 CATEGORICAL_FEATURES = ["day_of_week", "weather_main"]
 BOOLEAN_FEATURES = ["is_weekend", "is_clear", "is_precipitating"]
+
+DAY_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 def load_data(csv_path: Path) -> pd.DataFrame:
@@ -67,14 +75,28 @@ def load_data(csv_path: Path) -> pd.DataFrame:
 
 
 def build_feature_matrix(df: pd.DataFrame) -> pd.DataFrame:
-    """Build the shared, leakage-free feature matrix used by all models."""
-    logger.debug("Building feature matrix (time + raw weather features only).")
+    """Build the shared, leakage-free feature matrix used by all models.
+
+    Includes: time features (hour, month, cyclical hour_sin/hour_cos),
+    a cyclical encoding of day of week (dow_sin/dow_cos), a holiday flag,
+    numeric weather features, and one-hot encoded categorical features.
+    """
+    logger.debug("Building feature matrix (time + weather + holiday features).")
 
     feature_cols = TIME_FEATURES + NUMERIC_WEATHER_FEATURES + BOOLEAN_FEATURES
     X = df[feature_cols].copy()
 
     for col in BOOLEAN_FEATURES:
         X[col] = X[col].astype(int)
+
+    # Holiday flag: True if this row is a recognised US federal holiday
+    # (the 'holiday' column uses the literal string "None" for non-holidays).
+    X["is_holiday"] = (df["holiday"] != "None").astype(int)
+
+    # Cyclical encoding of day of week (7-day cycle), analogous to hour_sin/cos.
+    dow_numeric = df["day_of_week"].map({day: i for i, day in enumerate(DAY_ORDER)})
+    X["dow_sin"] = np.sin(2 * np.pi * dow_numeric / 7)
+    X["dow_cos"] = np.cos(2 * np.pi * dow_numeric / 7)
 
     X = pd.get_dummies(X.join(df[CATEGORICAL_FEATURES]), columns=CATEGORICAL_FEATURES, drop_first=True)
 
@@ -108,19 +130,22 @@ def run_classification(df: pd.DataFrame, X: pd.DataFrame) -> None:
         if name == "Logistic Regression":
             model.fit(X_train_scaled, y_train)
             y_pred = model.predict(X_test_scaled)
+            y_proba = model.predict_proba(X_test_scaled)[:, 1]
         else:
             model.fit(X_train, y_train)
             y_pred = model.predict(X_test)
+            y_proba = model.predict_proba(X_test)[:, 1]
 
         acc = accuracy_score(y_test, y_pred)
         prec = precision_score(y_test, y_pred)
         rec = recall_score(y_test, y_pred)
         f1 = f1_score(y_test, y_pred)
+        roc_auc = roc_auc_score(y_test, y_proba)
         cm = confusion_matrix(y_test, y_pred)
 
         logger.info(
             f"{name} results -- Accuracy: {acc:.4f}, Precision: {prec:.4f}, "
-            f"Recall: {rec:.4f}, F1: {f1:.4f}"
+            f"Recall: {rec:.4f}, F1: {f1:.4f}, ROC AUC: {roc_auc:.4f}"
         )
         logger.info(f"{name} confusion matrix (rows=actual, cols=predicted):\n{cm}")
 
