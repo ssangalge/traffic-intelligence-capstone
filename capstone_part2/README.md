@@ -2,6 +2,24 @@
 
 Data pipeline, feature engineering, visualizations, and an interactive CLI app for the Metro Interstate Traffic Volume dataset.
 
+## Logging Configuration
+
+All scripts share a single logging setup, configured once in `logging_setup.py` and imported by every other module (`logging.getLogger(__name__)` is used in each file, never the bare root logger).
+
+**Where logs are written:**
+- **Console (stdout):** shows INFO level and above (INFO, WARNING, ERROR) — this is what you see while a script runs.
+- **`pipeline.log` (file):** captures everything from DEBUG level upward — the complete diagnostic trail, including detail not shown on-screen. This file is gitignored since it grows on every run; a frozen example is committed separately as `sample_pipeline_log.txt`.
+
+**Log format:** `timestamp | level | module name | message`
+
+**What each level means in this project:**
+| Level | Meaning | Example |
+|---|---|---|
+| `DEBUG` | Fine-grained internal values, useful only for troubleshooting. Never shown on console, only in `pipeline.log`. | Calculated quartile threshold values before they're used to build a category column |
+| `INFO` | Normal, expected milestones. | Data loaded (with row/column counts), a cleaning step completed, a figure saved, a CLI command was invoked |
+| `WARNING` | Something unexpected but recoverable — data was changed. | Rows dropped as duplicates, an impossible value imputed, a monitoring alert threshold crossed |
+| `ERROR` | Something prevented normal completion, or the user supplied invalid input. | A malformed date entered in the CLI, the pipeline failing to write its output file |
+
 ## Setup
 
 From the repo root, with your virtual environment activated:
