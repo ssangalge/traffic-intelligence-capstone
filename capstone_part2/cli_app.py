@@ -64,12 +64,12 @@ def filter_by_date_range(df: pd.DataFrame) -> None:
         start_date = datetime.strptime(start_str, "%Y-%m-%d")
         end_date = datetime.strptime(end_str, "%Y-%m-%d")
     except ValueError:
-        logger.warning(f"Invalid date format entered: '{start_str}' / '{end_str}'")
+        logger.error(f"Invalid date format entered: '{start_str}' / '{end_str}'. Expected YYYY-MM-DD.")
         print("Invalid date format. Please use YYYY-MM-DD (e.g. 2017-01-01).")
         return
 
     if start_date > end_date:
-        logger.warning(f"Start date {start_date} is after end date {end_date}.")
+        logger.error(f"Invalid date range: start date {start_date} is after end date {end_date}.")
         print("Start date must be before or equal to end date.")
         return
 
@@ -97,7 +97,7 @@ def filter_by_weather(df: pd.DataFrame) -> None:
 
     matches = df[df["weather_main"].str.lower() == choice.lower()]
     if matches.empty:
-        logger.warning(f"User entered unrecognised weather condition: '{choice}'")
+        logger.error(f"Invalid input: unrecognised weather condition '{choice}'.")
         print(f"'{choice}' not found. Please choose from the list shown above.")
         return
 
@@ -124,19 +124,23 @@ def run_cli(data_path: Path = DATA_PATH) -> None:
         choice = input("Select an option (1-5): ").strip()
 
         if choice == "1":
+            logger.info("Command invoked: 1 (view overall traffic statistics), args=none")
             show_overall_stats(df)
         elif choice == "2":
+            logger.info("Command invoked: 2 (filter by date range), args=prompted interactively")
             filter_by_date_range(df)
         elif choice == "3":
+            logger.info("Command invoked: 3 (filter by weather condition), args=prompted interactively")
             filter_by_weather(df)
         elif choice == "4":
+            logger.info("Command invoked: 4 (view congestion rate), args=none")
             show_congestion_rate(df)
         elif choice == "5":
-            logger.info("User exited the CLI.")
+            logger.info("Command invoked: 5 (exit)")
             print("Goodbye!")
             break
         else:
-            logger.warning(f"User entered invalid menu choice: '{choice}'")
+            logger.error(f"Invalid menu choice entered: '{choice}'. Expected 1-5.")
             print("Invalid choice. Please enter a number from 1 to 5.")
 
 
@@ -144,8 +148,8 @@ if __name__ == "__main__":
     configure_logging()
     try:
         run_cli()
-    except FileNotFoundError as e:
-        logger.error(f"CLI could not start: {e}")
+    except FileNotFoundError:
+        logger.error("CLI could not start.", exc_info=True)
         sys.exit(1)
     except KeyboardInterrupt:
         logger.info("CLI interrupted by user (Ctrl+C).")
