@@ -17,6 +17,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
 from sklearn.preprocessing import StandardScaler
 
 from logging_setup import configure_logging
@@ -48,7 +49,13 @@ def load_cleaned_data(csv_path: Path) -> pd.DataFrame:
 
 
 def add_time_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Add hour, day of week, month, and weekend flag from date_time."""
+    """Add hour, day of week, month, weekend flag, and a cyclical encoding
+    of hour from date_time.
+
+    Hour is cyclical (23 and 0 are actually adjacent, not 23 apart), so a
+    raw integer 0-23 misrepresents that adjacency to a model. Encoding it
+    as sine/cosine pairs preserves the correct circular distance.
+    """
     logger.debug("Adding time-based features.")
 
     df["hour"] = df["date_time"].dt.hour
@@ -56,7 +63,14 @@ def add_time_features(df: pd.DataFrame) -> pd.DataFrame:
     df["month"] = df["date_time"].dt.month
     df["is_weekend"] = df["date_time"].dt.dayofweek >= 5  # Saturday=5, Sunday=6
 
-    logger.info("Added time features: hour, day_of_week, month, is_weekend.")
+    # Cyclical encoding of hour (24-hour cycle)
+    df["hour_sin"] = np.sin(2 * np.pi * df["hour"] / 24)
+    df["hour_cos"] = np.cos(2 * np.pi * df["hour"] / 24)
+
+    logger.info(
+        "Added time features: hour, day_of_week, month, is_weekend, "
+        "hour_sin, hour_cos (cyclical encoding)."
+    )
     return df
 
 
@@ -86,11 +100,21 @@ def add_scaled_numerics(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def add_congestion_target(df: pd.DataFrame) -> pd.DataFrame:
-    """Add the congestion target variable(s) using thresholds established in Part 1.
+    """Add the congestion target variable(s).
 
-    is_congested: binary target (traffic_volume > 5,500)
-    traffic_category: 3-class target (Low / Medium / High), matching the
-    Power BI Traffic_Category column from Part 1 for consistency.
+    is_congested: binary target (traffic_volume > 5,500), using the fixed
+    threshold established in Part 1's Power BI Traffic_Category column,
+    kept for consistency across parts.
+
+    traffic_category: 3-class label (Low/Medium/High) using those same
+    fixed Part 1 thresholds.
+
+    congestion_category_quartile: a DATA-DRIVEN 4-class label (Low/Medium/
+    High/Severe) based on the quartiles of traffic_volume itself, rather
+    than fixed thresholds -- this is the "data-driven congestion category"
+    requested by the spec. The quartile boundary VALUES are intermediate
+    calculations not needed in the final output, so they are logged at
+    DEBUG level only (not persisted as their own column).
     """
     logger.debug("Building congestion target variable(s).")
 
@@ -106,10 +130,27 @@ def add_congestion_target(df: pd.DataFrame) -> pd.DataFrame:
 
     df["traffic_category"] = df["traffic_volume"].apply(categorize)
 
+    # Data-driven quartile thresholds -- intermediate values, logged at
+    # DEBUG only since they aren't part of the persisted output themselves.
+    q1, q2, q3 = df["traffic_volume"].quantile([0.25, 0.5, 0.75]).values
+    logger.debug(f"Congestion quartile thresholds calculated: Q1={q1:.1f}, Q2(median)={q2:.1f}, Q3={q3:.1f}")
+
+    def quartile_bucket(volume: float) -> str:
+        if volume <= q1:
+            return "Low"
+        elif volume <= q2:
+            return "Medium"
+        elif volume <= q3:
+            return "High"
+        return "Severe"
+
+    df["congestion_category_quartile"] = df["traffic_volume"].apply(quartile_bucket)
+
     congestion_rate = df["is_congested"].mean()
     logger.info(
         f"Added target variables: is_congested ({congestion_rate:.2%} of rows), "
-        f"traffic_category (Low/Medium/High)."
+        f"traffic_category (Low/Medium/High, fixed thresholds), "
+        f"congestion_category_quartile (Low/Medium/High/Severe, data-driven quartiles)."
     )
     return df
 
@@ -122,15 +163,19 @@ def run_feature_engineering(
     logger.info("=== Starting feature engineering ===")
 
     df = load_cleaned_data(input_csv_path)
+    logger.info(f"Dataset shape BEFORE feature engineering: {df.shape[0]:,} rows, {df.shape[1]} columns.")
+
     df = add_time_features(df)
     df = add_weather_features(df)
     df = add_scaled_numerics(df)
     df = add_congestion_target(df)
 
+    logger.info(f"Dataset shape AFTER feature engineering: {df.shape[0]:,} rows, {df.shape[1]} columns.")
+
     try:
         df.to_csv(output_csv_path, index=False)
     except OSError as e:
-        logger.error(f"Failed to write featured CSV to {output_csv_path}: {e}")
+        logger.error(f"Failed to write featured CSV to {output_csv_path}: {e}", exc_info=True)
         raise
 
     logger.info(f"Featured data written to {output_csv_path} ({len(df):,} rows, {len(df.columns)} columns).")
@@ -142,6 +187,6 @@ if __name__ == "__main__":
     configure_logging()
     try:
         run_feature_engineering()
-    except Exception as e:
-        logger.error(f"Feature engineering failed: {e}")
+    except Exception:
+        logger.error("Feature engineering failed and could not complete.", exc_info=True)
         sys.exit(1)
