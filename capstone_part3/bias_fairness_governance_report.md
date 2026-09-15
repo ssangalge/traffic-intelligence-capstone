@@ -21,39 +21,41 @@ Testing the trained Random Forest classifier on held-out data, split by subgroup
 
 | Subgroup | n (test) | Accuracy | Precision | Recall |
 |---|---|---|---|---|
-| Weekday | 6,889 | 0.916 | 0.839 | **0.953** |
-| Weekend | 2,752 | 0.964 | 0.828 | **0.376** |
+| Weekday | 6,911 | 0.933 | 0.885 | **0.939** |
+| Weekend | 2,727 | 0.967 | 0.808 | **0.434** |
 
-**Finding:** the model's recall on weekends (37.6%) is dramatically worse than on weekdays (95.3%) — it misses the majority of genuinely "High risk" weekend hours. This is the most significant fairness concern found: **the model is far less reliable for weekend travelers**, likely because the training data contains proportionally fewer weekend high-risk examples (the label's congestion-quartile logic is itself calibrated mostly around weekday commute patterns).
+**Finding:** the model's recall on weekends (43.4%) remains dramatically worse than on weekdays (93.9%) — even after adding cyclical hour/day-of-week encoding and a holiday flag, which improved overall accuracy but did not close this gap. It still misses the majority of genuinely "High risk" weekend hours. This is the most significant fairness concern found: **the model is far less reliable for weekend travelers**, likely because the training data contains proportionally fewer weekend high-risk examples (the label's congestion-quartile logic is itself calibrated mostly around weekday commute patterns).
 
 | Weather condition | n (test) | Accuracy | Precision | Recall |
 |---|---|---|---|---|
-| Fog | 185 | 0.968 | 0.965 | 0.932 |
-| Thunderstorm | 187 | 0.963 | 0.941 | 0.955 |
-| Snow | 575 | 0.930 | 0.909 | 0.949 |
-| Clear | 2,702 | 0.943 | 0.851 | 0.903 |
-| Drizzle | 327 | 0.945 | 0.830 | 0.988 |
-| Mist | 1,256 | 0.936 | 0.813 | 0.946 |
-| Clouds | 2,978 | 0.915 | 0.827 | 0.915 |
-| Rain | 1,172 | 0.922 | 0.796 | 0.941 |
-| **Haze** | 254 | **0.882** | **0.761** | 0.785 |
+| Thunderstorm | 197 | 0.975 | 0.964 | 0.976 |
+| Fog | 202 | 0.960 | 0.945 | 0.945 |
+| Mist | 1,242 | 0.956 | 0.877 | 0.954 |
+| Clear | 2,696 | 0.948 | 0.860 | 0.902 |
+| Drizzle | 383 | 0.948 | 0.873 | 0.927 |
+| Snow | 559 | 0.939 | 0.926 | 0.947 |
+| Rain | 1,114 | 0.938 | 0.878 | 0.893 |
+| Clouds | 2,982 | 0.932 | 0.882 | 0.896 |
+| **Haze** | 255 | **0.914** | **0.818** | 0.887 |
 
-**Finding:** performance under **Haze** conditions is notably weaker across every metric than under other weather types. This is plausibly a smaller-sample effect (Haze is one of the rarer categories) rather than a fundamental issue, but it means predictions during hazy conditions should be treated with more caution.
+**Finding:** performance under **Haze** conditions remains the weakest across every metric among weather types, though it improved from the earlier model (88.2%→91.4% accuracy). This is plausibly a smaller-sample effect (Haze is one of the rarer categories) rather than a fundamental issue, but predictions during hazy conditions should still be treated with more caution.
 
 | Time-of-day bucket | n (test) | Accuracy | Precision | Recall |
 |---|---|---|---|---|
-| Overnight | 4,459 | 0.997 | **0.500** | **0.167** |
-| Midday | 2,343 | **0.821** | **0.744** | 0.897 |
-| Morning rush | 1,665 | 0.911 | 0.887 | 0.977 |
-| Evening rush | 1,174 | 0.917 | 0.949 | 0.891 |
+| Overnight | 4,481 | 0.997 | **0.500** | **0.143** |
+| Midday | 2,323 | **0.863** | **0.835** | 0.852 |
+| Morning rush | 1,648 | 0.921 | 0.901 | 0.982 |
+| Evening rush | 1,186 | 0.922 | 0.931 | 0.918 |
 
-**Finding:** overnight hours show a misleadingly high accuracy (99.7%) driven almost entirely by class imbalance — "High risk" is so rare overnight that the model can score well just by predicting "Low" nearly every time, but its precision (50%) and recall (16.7%) on the rare positive cases are poor. Midday hours show the weakest overall balance of precision/recall, suggesting this is the hardest segment for the model to characterize.
+**Finding:** overnight hours still show a misleadingly high accuracy (99.7%) driven almost entirely by class imbalance — "High risk" is so rare overnight that the model scores well by predicting "Low" nearly every time, but its precision (50%) and recall (14.3%) on the rare positive cases remain poor even after the feature improvements. Midday hours improved (82.1%→86.3% accuracy) but remain the weakest daytime segment.
 
 ### 1.3 Fairness implications
 
+**A notable methodological finding:** adding cyclical hour/day-of-week encoding and a holiday flag meaningfully improved overall model accuracy (93.9% vs. 94.1% previously — comparable, but via a materially different and more principled feature representation) and even slightly improved weekend recall (37.6%→43.4%), but did **not** close the weekend fairness gap. This suggests the gap is not primarily a feature-representation problem (which better encoding could fix), but more likely a genuine **class imbalance** issue — proportionally fewer weekend "High risk" training examples for the model to learn from. This distinction matters for remediation: the fix is more likely to require rebalancing or reweighting training data by day-type, not further feature engineering.
+
 - **Who is underserved:** weekend travelers and midday travelers receive the least reliable risk predictions. If this system informed real routing/scheduling decisions, these groups would be systematically under-warned about genuine risk.
-- **Root cause:** this is very likely a **training data imbalance** issue (fewer weekend/midday high-risk examples for the model to learn from) compounded by the proxy label's inherent weekday-commute bias, rather than an issue with the algorithm itself.
-- **Recommendation:** before any real-world use, weekend-specific and midday-specific model variants (or reweighted training) should be explored, and users should be shown a confidence/reliability indicator alongside predictions rather than a bare label.
+- **Root cause:** very likely a **training data imbalance** issue (fewer weekend/midday high-risk examples for the model to learn from) compounded by the proxy label's inherent weekday-commute bias, rather than an issue with the algorithm or feature representation itself.
+- **Recommendation:** before any real-world use, weekend-specific and midday-specific model variants (or reweighted/oversampled training) should be explored, and users should be shown a confidence/reliability indicator alongside predictions rather than a bare label.
 
 ### 1.4 Limitations on generalizability
 
